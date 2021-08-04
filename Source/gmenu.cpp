@@ -96,7 +96,7 @@ int GmenuGetLineWidth(TMenuItem *pItem)
 	if ((pItem->dwFlags & GMENU_SLIDER) != 0)
 		return 490;
 
-	return GetLineWidth(_(pItem->pszStr), GameFontBig, 2);
+	return GetLineWidth(_(pItem->pszStr), GameFont46, 2);
 }
 
 void GmenuDrawMenuItem(const Surface &out, TMenuItem *pItem, int y)
@@ -113,7 +113,7 @@ void GmenuDrawMenuItem(const Surface &out, TMenuItem *pItem, int y)
 	}
 
 	int x = (gnScreenWidth - w) / 2;
-	UiFlags style = (pItem->dwFlags & GMENU_ENABLED) != 0 ? UiFlags::ColorSilver : UiFlags::ColorBlack;
+	UiFlags style = (pItem->dwFlags & GMENU_ENABLED) != 0 ? UiFlags::ColorGold : UiFlags::ColorBlack;
 	DrawString(out, _(pItem->pszStr), Point { x, y }, style | UiFlags::FontHuge, 2);
 	if (pItem == sgpCurrItem) {
 		CelDrawTo(out, { x - 54, y + 1 }, *PentSpin_cel, PentSpn2Spin());

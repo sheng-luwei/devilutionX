@@ -35,7 +35,7 @@ extern SDL_Color orig_palette[256];
 /** Lookup table for transparency */
 extern Uint8 paletteTransparencyLookup[256][256];
 
-void palette_update();
+void palette_update(int first, int ncolor);
 void palette_init();
 void LoadPalette(const char *pszFileName, bool blend = true);
 void LoadRndLvlPal(dungeon_type l);

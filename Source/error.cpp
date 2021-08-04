@@ -35,7 +35,7 @@ void InitNextLines()
 	char tempstr[1536]; // Longest test is about 768 chars * 2 for unicode
 	strcpy(tempstr, message.data());
 
-	WordWrapGameString(tempstr, LineWidth, GameFontSmall, 1);
+	WordWrapGameString(tempstr, LineWidth, GameFont12, 1);
 	const string_view paragraphs = tempstr;
 
 	size_t previous = 0;

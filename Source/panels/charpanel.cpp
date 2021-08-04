@@ -125,9 +125,9 @@ PanelEntry panelEntries[] = {
 	{ N_("Level"), { 57, 52 }, 45, { -3, 0 }, 0, 0, 1, false, false,
 	    []() { return StyledText { UiFlags::ColorSilver, fmt::format("{:d}", MyPlayer->_pLevel) }; } },
 
-	{ N_("Base"), { 88, 118 }, 33, { 39, 0 }, 0, 0, 0, false, false,
+	{ N_("Base"), { 88, 117 }, 33, { 39, 0 }, 0, 0, 0, false, false,
 	    nullptr },
-	{ N_("Now"), { 135, 118 }, 33, { 39, 0 }, 0, 0, 0, false, false,
+	{ N_("Now"), { 135, 117 }, 33, { 39, 0 }, 0, 0, 0, false, false,
 	    nullptr },
 
 	{ N_("Strength"), { 88, 137 }, 33, { -3, 0 }, 0, 0, 1, false, true,
@@ -196,10 +196,10 @@ PanelEntry panelEntries[] = {
 	        return StyledText { GetValueColor(MyPlayer->_pIBonusDam), fmt::format("{:d}-{:d}", dmg.first, dmg.second) };
 	    } },
 
-	{ N_("Resist magic"), { 250, 259 }, 45, { -3, -5 }, 46, 1, 1, false, false,
+	{ N_("Resist magic"), { 250, 259 }, 45, { -3, -5 }, 46, 0, 1, false, false,
 	    []() { return GetResistInfo(MyPlayer->_pMagResist); } },
 
-	{ N_("Resist fire"), { 250, 287 }, 45, { -3, -5 }, 46, 1, 1, false, false,
+	{ N_("Resist fire"), { 250, 287 }, 45, { -3, -5 }, 46, 0, 1, false, false,
 	    []() { return GetResistInfo(MyPlayer->_pFireResist); } },
 
 	{ N_("Resist lightning"), { 250, 315 }, 45, { -3, -5 }, 76, 0, 1, false, false,
@@ -238,10 +238,10 @@ void DrawShadowString(const Surface &out, const PanelEntry &entry)
 	int spacing = entry.labelSpacing;
 	strcpy(buffer, text_tmp.c_str());
 	if (entry.labelLength > 0)
-		WordWrapGameString(buffer, entry.labelLength, GameFontSmall, spacing);
+		WordWrapGameString(buffer, entry.labelLength, GameFont12, spacing);
 	std::string text(buffer);
-	int width = GetLineWidth(text, GameFontSmall, spacing);
-	Point finalPos = { entry.position + Displacement { 0, 17 } + entry.labelOffset };
+	int width = GetLineWidth(text, GameFont12, spacing);
+	Point finalPos = { entry.position + Displacement { 0, 16 } + entry.labelOffset };
 	if (entry.centered)
 		width = entry.length;
 	else
@@ -256,20 +256,24 @@ void DrawShadowString(const Surface &out, const PanelEntry &entry)
 	DrawString(out, text, { finalPos, { width, 0 } }, style | UiFlags::ColorSilver, spacing, 10);
 }
 
+bool CharPanelLoaded = false;
+
 void LoadCharPanel()
 {
-	LoadArt("data\\charbg.pcx", &PanelFull);
-	LoadArt("data\\boxleftend26.pcx", &PanelParts[0]);
-	LoadArt("data\\boxmiddle26.pcx", &PanelParts[1]);
-	LoadArt("data\\boxrightend26.pcx", &PanelParts[2]);
-	LoadArt("data\\boxleftend27.pcx", &PanelParts[3]);
-	LoadArt("data\\boxmiddle27.pcx", &PanelParts[4]);
-	LoadArt("data\\boxrightend27.pcx", &PanelParts[5]);
+	if (!CharPanelLoaded) {
+		LoadArt("data\\charbg.pcx", &PanelFull);
+		LoadArt("data\\boxleftend26.pcx", &PanelParts[0]);
+		LoadArt("data\\boxmiddle26.pcx", &PanelParts[1]);
+		LoadArt("data\\boxrightend26.pcx", &PanelParts[2]);
+		LoadArt("data\\boxleftend27.pcx", &PanelParts[3]);
+		LoadArt("data\\boxmiddle27.pcx", &PanelParts[4]);
+		LoadArt("data\\boxrightend27.pcx", &PanelParts[5]);
+	}
 
 	const Surface out(PanelFull.surface.get());
 
 	for (auto &entry : panelEntries) {
-		if (entry.statDisplayFunc != nullptr) {
+		if (!CharPanelLoaded && entry.statDisplayFunc != nullptr) {
 			if (entry.high)
 				DrawPanelFieldHigh(out, entry.position, entry.length);
 			else
@@ -279,11 +283,9 @@ void LoadCharPanel()
 	}
 
 	for (auto &gfx : PanelParts) {
-		gfx.Unload();
+	//	gfx.Unload();
 	}
 }
-
-bool CharPanelLoaded = false;
 
 void DrawStatButtons(const Surface &out)
 {
@@ -303,10 +305,10 @@ void DrawStatButtons(const Surface &out)
 
 void DrawChr(const Surface &out)
 {
-	if (!CharPanelLoaded) {
-		LoadCharPanel();
-		CharPanelLoaded = true;
-	}
+	//if (!CharPanelLoaded) {
+	LoadCharPanel();
+	CharPanelLoaded = true;
+	//}
 	Point pos = GetPanelPosition(UiPanels::Character, { 0, 0 });
 	DrawArt(out, pos, &PanelFull);
 	for (auto &entry : panelEntries) {

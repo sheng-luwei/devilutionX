@@ -146,11 +146,11 @@ std::ofstream CaptureFile(std::string *dstPath)
  */
 void RedPalette()
 {
-	for (int i = 0; i < 255; i++) {
+	for (int i = 0; i < 256; i++) {
 		system_palette[i].g = 0;
 		system_palette[i].b = 0;
 	}
-	palette_update();
+	palette_update(0, 256);
 	BltFast(nullptr, nullptr);
 	RenderPresent();
 }
@@ -191,7 +191,7 @@ void CaptureScreen()
 	for (int i = 0; i < 256; i++) {
 		system_palette[i] = palette[i];
 	}
-	palette_update();
+	palette_update(0, 256);
 	force_redraw = 255;
 }
 

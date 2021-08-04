@@ -19,14 +19,19 @@
 namespace devilution {
 
 enum GameFontTables : uint8_t {
-	GameFontSmall,
-	GameFontMed,
-	GameFontBig,
+	GameFont12,
+	GameFont16,
+	GameFont24,
+	GameFont30,
+	GameFont42,
+	GameFont46,
 };
 
 extern std::optional<CelSprite> pSPentSpn2Cels;
 
 void InitText();
+
+void UpdateFontColors();
 
 /**
  * @brief Calculate pixel width of first line of text, respecting kerning
@@ -36,8 +41,8 @@ void InitText();
  * @param charactersInLine Receives characters read until newline or terminator
  * @return Line width in pixels
  */
-int GetLineWidth(string_view text, GameFontTables size = GameFontSmall, int spacing = 1, int *charactersInLine = nullptr);
-void WordWrapGameString(char *text, size_t width, GameFontTables size = GameFontSmall, int spacing = 1);
+int GetLineWidth(string_view text, GameFontTables size = GameFont12, int spacing = 1, int *charactersInLine = nullptr);
+void WordWrapGameString(char *text, size_t width, GameFontTables size = GameFont12, int spacing = 1);
 
 /**
  * @brief Draws a line of text within a clipping rectangle (positioned relative to the origin of the output buffer).
