@@ -1121,7 +1121,7 @@ int SaveItemPower(Item &item, const ItemPower &power)
 
 bool StringInPanel(const char *str)
 {
-	return GetLineWidth(str, GameFontSmall, 0) < 125;
+	return GetLineWidth(str, GameFont12, 0) < 125;
 }
 
 int PLVal(int pv, int p1, int p2, int minv, int maxv)
@@ -4141,7 +4141,7 @@ void DrawUniqueInfo(const Surface &out)
 			break;
 		rect.position.y += 2 * 12;
 		PrintItemPower(power.type, &curruitem);
-		DrawString(out, tempstr, rect, UiFlags::ColorSilver | UiFlags::AlignCenter);
+		DrawString(out, tempstr, rect, UiFlags::ColorWhite | UiFlags::AlignCenter);
 	}
 }
 

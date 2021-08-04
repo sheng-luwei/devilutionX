@@ -1,7 +1,6 @@
 #include <fmt/format.h>
 
 #include "DiabloUI/diabloui.h"
-#include "DiabloUI/text.h"
 #include "stores.h"
 #include "storm/storm.h"
 #include "utils/language.h"
@@ -45,7 +44,7 @@ void SelconnLoad()
 	UiAddLogo(&vecSelConnDlg);
 
 	SDL_Rect rect1 = { (Sint16)(PANEL_LEFT + 24), (Sint16)(Sint16)(UI_OFFSET_Y + 161), 590, 35 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("Multi Player Game"), rect1, UiFlags::AlignCenter | UiFlags::FontBig));
+	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("Multi Player Game"), rect1, UiFlags::AlignCenter | UiFlags::FontSize30, 3));
 
 	SDL_Rect rect2 = { (Sint16)(PANEL_LEFT + 35), (Sint16)(UI_OFFSET_Y + 218), DESCRIPTION_WIDTH, 21 };
 	vecSelConnDlg.push_back(std::make_unique<UiArtText>(selconn_MaxPlayers, rect2));
@@ -54,27 +53,27 @@ void SelconnLoad()
 	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("Requirements:"), rect3));
 
 	SDL_Rect rect4 = { (Sint16)(PANEL_LEFT + 35), (Sint16)(UI_OFFSET_Y + 275), DESCRIPTION_WIDTH, 66 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtText>(selconn_Description, rect4));
+	vecSelConnDlg.push_back(std::make_unique<UiArtText>(selconn_Description, rect4, UiFlags::FontSize12, 1, 16));
 
 	SDL_Rect rect5 = { (Sint16)(PANEL_LEFT + 30), (Sint16)(UI_OFFSET_Y + 356), 220, 31 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("no gateway needed"), rect5, UiFlags::AlignCenter | UiFlags::FontMedium));
+	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("no gateway needed"), rect5, UiFlags::AlignCenter | UiFlags::FontSize24));
 
 	SDL_Rect rect6 = { (Sint16)(PANEL_LEFT + 35), (Sint16)(UI_OFFSET_Y + 393), DESCRIPTION_WIDTH, 21 };
 	vecSelConnDlg.push_back(std::make_unique<UiArtText>(selconn_Gateway, rect6, UiFlags::AlignCenter));
 
 	SDL_Rect rect7 = { (Sint16)(PANEL_LEFT + 300), (Sint16)(UI_OFFSET_Y + 211), 295, 33 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("Select Connection"), rect7, UiFlags::AlignCenter | UiFlags::FontBig));
+	vecSelConnDlg.push_back(std::make_unique<UiArtText>(_("Select Connection"), rect7, UiFlags::AlignCenter | UiFlags::FontSize30, 3));
 
 	SDL_Rect rect8 = { (Sint16)(PANEL_LEFT + 16), (Sint16)(UI_OFFSET_Y + 427), 250, 35 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("Change Gateway"), nullptr, rect8, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontBig | UiFlags::ColorGold | UiFlags::ElementHidden));
+	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("Change Gateway"), nullptr, rect8, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontSize30 | UiFlags::ColorGold));
 
 	vecSelConnDlg.push_back(std::make_unique<UiList>(vecConnItems, PANEL_LEFT + 305, (UI_OFFSET_Y + 256), 285, 26, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::ColorGold));
 
 	SDL_Rect rect9 = { (Sint16)(PANEL_LEFT + 299), (Sint16)(UI_OFFSET_Y + 427), 140, 35 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("OK"), &UiFocusNavigationSelect, rect9, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontBig | UiFlags::ColorGold));
+	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("OK"), &UiFocusNavigationSelect, rect9, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontSize30 | UiFlags::ColorGold));
 
 	SDL_Rect rect10 = { (Sint16)(PANEL_LEFT + 454), (Sint16)(UI_OFFSET_Y + 427), 140, 35 };
-	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("Cancel"), &UiFocusNavigationEsc, rect10, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontBig | UiFlags::ColorGold));
+	vecSelConnDlg.push_back(std::make_unique<UiArtTextButton>(_("Cancel"), &UiFocusNavigationEsc, rect10, UiFlags::AlignCenter | UiFlags::VerticalCenter | UiFlags::FontSize30 | UiFlags::ColorGold));
 
 	UiInitList(vecConnItems.size(), SelconnFocus, SelconnSelect, SelconnEsc, vecSelConnDlg, true);
 }
@@ -113,7 +112,7 @@ void SelconnFocus(int value)
 	}
 
 	strncpy(selconn_MaxPlayers, fmt::format(_("Players Supported: {:d}"), players).c_str(), sizeof(selconn_MaxPlayers));
-	WordWrapArtStr(selconn_Description, DESCRIPTION_WIDTH);
+	WordWrapString(selconn_Description, DESCRIPTION_WIDTH, GameFont16);
 }
 
 void SelconnSelect(int value)

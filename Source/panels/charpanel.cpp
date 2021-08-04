@@ -7,6 +7,8 @@
 #include "DiabloUI/art_draw.h"
 
 #include "control.h"
+#include "player.h"
+#include "utils/display.h"
 #include "engine/render/cel_render.hpp"
 #include "engine/render/text_render.hpp"
 #include "utils/language.h"
@@ -36,24 +38,13 @@ struct PanelEntry {
 	std::string label;
 	Point position;
 	int length;
-	Displacement labelOffset; // label's offset (end of the label vs the beginning of the stat box)
-	int labelLength;          // max label's length - used for line wrapping
-	int labelSpacing;
-	int statSpacing;
-	bool centered;
-	/**
-	 * Toggles whether the box should be using the 27px version or 26px.
-	 * Must be set to true for stat boxes or they don't line up with the "spend stat" button
-	 */
-	bool high;
-	std::function<StyledText()> statDisplayFunc; // function responsible for displaying stat
+	int labelLength;                                       // max label's length - used for line wrapping
+	std::function<StyledText()> statDisplayFunc = nullptr; // function responsible for displaying stat
 };
-
-Player *MyPlayer = &Players[MyPlayerId];
 
 UiFlags GetBaseStatColor(CharacterAttribute attr)
 {
-	UiFlags style = UiFlags::ColorSilver;
+	UiFlags style = UiFlags::ColorWhite;
 	if (MyPlayer->GetBaseAttributeValue(attr) == MyPlayer->GetMaximumAttributeValue(attr))
 		style = UiFlags::ColorGold;
 	return style;
@@ -61,7 +52,7 @@ UiFlags GetBaseStatColor(CharacterAttribute attr)
 
 UiFlags GetCurrentStatColor(CharacterAttribute attr)
 {
-	UiFlags style = UiFlags::ColorSilver;
+	UiFlags style = UiFlags::ColorWhite;
 	int current = MyPlayer->GetCurrentAttributeValue(attr);
 	int base = MyPlayer->GetBaseAttributeValue(attr);
 	if (current > base)
@@ -73,7 +64,7 @@ UiFlags GetCurrentStatColor(CharacterAttribute attr)
 
 UiFlags GetValueColor(int value, bool flip = false)
 {
-	UiFlags style = UiFlags::ColorSilver;
+	UiFlags style = UiFlags::ColorWhite;
 	if (value > 0)
 		style = (flip ? UiFlags::ColorRed : UiFlags::ColorBlue);
 	if (value < 0)
@@ -83,12 +74,12 @@ UiFlags GetValueColor(int value, bool flip = false)
 
 UiFlags GetMaxManaColor()
 {
-	return MyPlayer->_pMaxMana > MyPlayer->_pMaxManaBase ? UiFlags::ColorBlue : UiFlags::ColorSilver;
+	return MyPlayer->_pMaxMana > MyPlayer->_pMaxManaBase ? UiFlags::ColorBlue : UiFlags::ColorWhite;
 }
 
 UiFlags GetMaxHealthColor()
 {
-	return MyPlayer->_pMaxHP > MyPlayer->_pMaxHPBase ? UiFlags::ColorBlue : UiFlags::ColorSilver;
+	return MyPlayer->_pMaxHP > MyPlayer->_pMaxHPBase ? UiFlags::ColorBlue : UiFlags::ColorWhite;
 }
 
 std::pair<int, int> GetDamage()
@@ -108,7 +99,7 @@ StyledText GetResistInfo(int8_t resist)
 {
 	UiFlags style = UiFlags::ColorBlue;
 	if (resist == 0)
-		style = UiFlags::ColorSilver;
+		style = UiFlags::ColorWhite;
 	else if (resist < 0)
 		style = UiFlags::ColorRed;
 	else if (resist >= MAXRESIST)
@@ -120,112 +111,90 @@ StyledText GetResistInfo(int8_t resist)
 }
 
 PanelEntry panelEntries[] = {
-	{ "", { 13, 14 }, 134, { 0, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { UiFlags::ColorSilver, MyPlayer->_pName }; } },
-	{ N_("Level"), { 57, 52 }, 45, { -3, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { UiFlags::ColorSilver, fmt::format("{:d}", MyPlayer->_pLevel) }; } },
+	{ "", { 9, 14 }, 150, 0,
+	    []() { return StyledText { UiFlags::ColorWhite, MyPlayer->_pName }; } },
+	{ "", { 161, 14 }, 149, 0,
+	    []() { return StyledText { UiFlags::ColorWhite, _(ClassStrTbl[static_cast<std::size_t>(MyPlayer->_pClass)]) }; } },
 
-	{ N_("Base"), { 88, 118 }, 33, { 39, 0 }, 0, 0, 0, false, false,
-	    nullptr },
-	{ N_("Now"), { 135, 118 }, 33, { 39, 0 }, 0, 0, 0, false, false,
-	    nullptr },
+	{ N_("Level"), { 57, 52 }, 57, 45,
+	    []() { return StyledText { UiFlags::ColorWhite, fmt::format("{:d}", MyPlayer->_pLevel) }; } },
+	{ N_("Experience"), { 211, 52 }, 99, 91,
+	    []() { return StyledText { UiFlags::ColorWhite, fmt::format("{:d}", MyPlayer->_pExperience) }; } },
+	{ N_("Next level"), { 208, 80 }, 99, 198,
+	    []() {
+	        if (MyPlayer->_pLevel == MAXCHARLEVEL - 1) {
+		        return StyledText { UiFlags::ColorGold, _("None") };
+	        } else {
+		        return StyledText { UiFlags::ColorWhite, fmt::format("{:d}", MyPlayer->_pNextExper) };
+	        }
+	    } },
 
-	{ N_("Strength"), { 88, 137 }, 33, { -3, 0 }, 0, 0, 1, false, true,
+	{ N_("Base"), { 88, 115 }, 0, 44 },
+	{ N_("Now"), { 135, 115 }, 0, 44 },
+	{ N_("Strength"), { 88, 135 }, 45, 76,
 	    []() { return StyledText { GetBaseStatColor(CharacterAttribute::Strength), fmt::format("{:d}", MyPlayer->_pBaseStr) }; } },
-	{ N_("Magic"), { 88, 165 }, 33, { -3, 0 }, 0, 0, 1, false, true,
-	    []() { return StyledText { GetBaseStatColor(CharacterAttribute::Magic), fmt::format("{:d}", MyPlayer->_pBaseMag) }; } },
-	{ N_("Dexterity"), { 88, 193 }, 33, { -3, 0 }, 0, 0, 1, false, true,
-	    []() { return StyledText { GetBaseStatColor(CharacterAttribute::Dexterity), fmt::format("{:d}", MyPlayer->_pBaseDex) }; } },
-	{ N_("Vitality"), { 88, 221 }, 33, { -3, 0 }, 0, 0, 1, false, true,
-	    []() { return StyledText { GetBaseStatColor(CharacterAttribute::Vitality), fmt::format("{:d}", MyPlayer->_pBaseVit) }; } },
-
-	{ "", { 135, 137 }, 33, { 0, 0 }, 0, 0, 1, false, true,
+	{ "", { 135, 135 }, 45, 0,
 	    []() { return StyledText { GetCurrentStatColor(CharacterAttribute::Strength), fmt::format("{:d}", MyPlayer->_pStrength) }; } },
-	{ "", { 135, 165 }, 33, { 0, 0 }, 0, 0, 1, false, true,
+	{ N_("Magic"), { 88, 163 }, 45, 76,
+	    []() { return StyledText { GetBaseStatColor(CharacterAttribute::Magic), fmt::format("{:d}", MyPlayer->_pBaseMag) }; } },
+	{ "", { 135, 163 }, 45, 0,
 	    []() { return StyledText { GetCurrentStatColor(CharacterAttribute::Magic), fmt::format("{:d}", MyPlayer->_pMagic) }; } },
-	{ "", { 135, 193 }, 33, { 0, 0 }, 0, 0, 1, false, true,
+	{ N_("Dexterity"), { 88, 191 }, 45, 76, []() { return StyledText { GetBaseStatColor(CharacterAttribute::Dexterity), fmt::format("{:d}", MyPlayer->_pBaseDex) }; } },
+	{ "", { 135, 191 }, 45, 0,
 	    []() { return StyledText { GetCurrentStatColor(CharacterAttribute::Dexterity), fmt::format("{:d}", MyPlayer->_pDexterity) }; } },
-	{ "", { 135, 221 }, 33, { 0, 0 }, 0, 0, 1, false, true,
+	{ N_("Vitality"), { 88, 219 }, 45, 76, []() { return StyledText { GetBaseStatColor(CharacterAttribute::Vitality), fmt::format("{:d}", MyPlayer->_pBaseVit) }; } },
+	{ "", { 135, 219 }, 45, 0,
 	    []() { return StyledText { GetCurrentStatColor(CharacterAttribute::Vitality), fmt::format("{:d}", MyPlayer->_pVitality) }; } },
-
-	{ N_("Points to distribute"), { 88, 250 }, 33, { -3, -5 }, 120, 0, 1, false, false,
+	{ N_("Points to distribute"), { 88, 248 }, 45, 76,
 	    []() {
 	        MyPlayer->_pStatPts = std::min(CalcStatDiff(*MyPlayer), MyPlayer->_pStatPts);
 	        return StyledText { UiFlags::ColorRed, (MyPlayer->_pStatPts > 0 ? fmt::format("{:d}", MyPlayer->_pStatPts) : "") };
 	    } },
 
-	{ N_("Life"), { 88, 287 }, 33, { -3, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { GetMaxHealthColor(), fmt::format("{:d}", MyPlayer->_pMaxHP >> 6) }; } },
+	{ N_("Gold"), { 211, 107 }, 0, 98 },
+	{ "", { 211, 127 }, 99, 0,
+	    []() { return StyledText { UiFlags::ColorWhite, fmt::format("{:d}", MyPlayer->_pGold) }; } },
 
-	{ "", { 135, 287 }, 33, { 0, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { (MyPlayer->_pHitPoints != MyPlayer->_pMaxHP ? UiFlags::ColorRed : GetMaxHealthColor()), fmt::format("{:d}", MyPlayer->_pHitPoints >> 6) }; } },
-
-	{ N_("Mana"), { 88, 315 }, 33, { -3, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { GetMaxManaColor(), fmt::format("{:d}", MyPlayer->_pMaxMana >> 6) }; } },
-
-	{ "", { 135, 315 }, 33, { 0, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { (MyPlayer->_pMana != MyPlayer->_pMaxMana ? UiFlags::ColorRed : GetMaxManaColor()), fmt::format("{:d}", MyPlayer->_pMana >> 6) }; } },
-
-	{ "", { 161, 14 }, 134, { 0, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { UiFlags::ColorSilver, _(ClassStrTbl[static_cast<std::size_t>(MyPlayer->_pClass)]) }; } },
-
-	{ N_("Experience"), { 208, 52 }, 87, { -3, 0 }, 0, 0, 1, false, false,
-	    []() { return StyledText { UiFlags::ColorSilver, fmt::format("{:d}", MyPlayer->_pExperience) }; } },
-
-	{ N_("Next level"), { 208, 80 }, 87, { -3, 0 }, 0, 0, 1, false, false,
-	    []() {
-	        if (MyPlayer->_pLevel == MAXCHARLEVEL - 1) {
-		        return StyledText { UiFlags::ColorGold, _("None") };
-	        } else {
-		        return StyledText { UiFlags::ColorSilver, fmt::format("{:d}", MyPlayer->_pNextExper) };
-	        }
-	    } },
-
-	{ N_("Gold"), { 208, 129 }, 87, { 0, -20 }, 0, 0, 1, true, false,
-	    []() { return StyledText { UiFlags::ColorSilver, fmt::format("{:d}", MyPlayer->_pGold) }; } },
-
-	{ N_("Armor class"), { 250, 166 }, 45, { -3, -5 }, 55, 0, 1, false, false,
+	{ N_("Armor class"), { 253, 163 }, 57, 67,
 	    []() { return StyledText { GetValueColor(MyPlayer->_pIBonusAC), fmt::format("{:d}", MyPlayer->GetArmor()) }; } },
-
-	{ N_("To hit"), { 250, 194 }, 45, { -3, 0 }, 0, 0, 1, false, false,
+	{ N_("To hit"), { 253, 191 }, 57, 67,
 	    []() { return StyledText { GetValueColor(MyPlayer->_pIBonusToHit), fmt::format("{:d}%", (MyPlayer->InvBody[INVLOC_HAND_LEFT]._itype == ITYPE_BOW ? MyPlayer->GetRangedToHit() : MyPlayer->GetMeleeToHit())) }; } },
-
-	{ N_("Damage"), { 250, 222 }, 45, { -3, 0 }, 0, 0, 0, false, false,
+	{ N_("Damage"), { 253, 219 }, 57, 67,
 	    []() {
 	        std::pair<int, int> dmg = GetDamage();
 	        return StyledText { GetValueColor(MyPlayer->_pIBonusDam), fmt::format("{:d}-{:d}", dmg.first, dmg.second) };
 	    } },
 
-	{ N_("Resist magic"), { 250, 259 }, 45, { -3, -5 }, 46, 1, 1, false, false,
+	{ N_("Life"), { 88, 284 }, 45, 76,
+	    []() { return StyledText { GetMaxHealthColor(), fmt::format("{:d}", MyPlayer->_pMaxHP >> 6) }; } },
+	{ "", { 135, 284 }, 45, 0,
+	    []() { return StyledText { (MyPlayer->_pHitPoints != MyPlayer->_pMaxHP ? UiFlags::ColorRed : GetMaxHealthColor()), fmt::format("{:d}", MyPlayer->_pHitPoints >> 6) }; } },
+	{ N_("Mana"), { 88, 312 }, 45, 76,
+	    []() { return StyledText { GetMaxManaColor(), fmt::format("{:d}", MyPlayer->_pMaxMana >> 6) }; } },
+	{ "", { 135, 312 }, 45, 0,
+	    []() { return StyledText { (MyPlayer->_pMana != MyPlayer->_pMaxMana ? UiFlags::ColorRed : GetMaxManaColor()), fmt::format("{:d}", MyPlayer->_pMana >> 6) }; } },
+
+	{ N_("Resist magic"), { 253, 256 }, 57, 67,
 	    []() { return GetResistInfo(MyPlayer->_pMagResist); } },
-
-	{ N_("Resist fire"), { 250, 287 }, 45, { -3, -5 }, 46, 1, 1, false, false,
+	{ N_("Resist fire"), { 253, 284 }, 57, 67,
 	    []() { return GetResistInfo(MyPlayer->_pFireResist); } },
-
-	{ N_("Resist lightning"), { 250, 315 }, 45, { -3, -5 }, 76, 0, 1, false, false,
+	{ N_("Resist lightning"), { 253, 313 }, 57, 67,
 	    []() { return GetResistInfo(MyPlayer->_pLghtResist); } },
-
 };
 
-Art PanelParts[6];
+Art PanelBoxLeft;
+Art PanelBoxMiddel;
+Art PanelBoxRight;
 Art PanelFull;
 
-void DrawPanelFieldLow(const Surface &out, Point pos, int len)
+void DrawPanelField(const Surface &out, Point pos, int len)
 {
-	DrawArt(out, pos, &PanelParts[0]);
-	pos.x += PanelParts[0].w();
-	DrawArt(out, pos, &PanelParts[1], 0, len);
+	DrawArt(out, pos, &PanelBoxLeft);
+	pos.x += PanelBoxLeft.w();
+	len -= PanelBoxLeft.w() + PanelBoxRight.w();
+	DrawArt(out, pos, &PanelBoxMiddel, 0, len);
 	pos.x += len;
-	DrawArt(out, pos, &PanelParts[2]);
-}
-
-void DrawPanelFieldHigh(const Surface &out, Point pos, int len)
-{
-	DrawArt(out, pos, &PanelParts[3]);
-	pos.x += PanelParts[3].w();
-	DrawArt(out, pos, &PanelParts[4], 0, len);
-	pos.x += len;
-	DrawArt(out, pos, &PanelParts[5]);
+	DrawArt(out, pos, &PanelBoxRight);
 }
 
 void DrawShadowString(const Surface &out, const PanelEntry &entry)
@@ -235,67 +204,63 @@ void DrawShadowString(const Surface &out, const PanelEntry &entry)
 
 	std::string text_tmp = _(entry.label.c_str());
 	char buffer[32];
-	int spacing = entry.labelSpacing;
+	int spacing = 0;
 	strcpy(buffer, text_tmp.c_str());
 	if (entry.labelLength > 0)
-		WordWrapGameString(buffer, entry.labelLength, GameFontSmall, spacing);
+		WordWrapString(buffer, entry.labelLength, GameFont12, spacing);
 	std::string text(buffer);
-	int width = GetLineWidth(text, GameFontSmall, spacing);
-	Point finalPos = { entry.position + Displacement { 0, 17 } + entry.labelOffset };
-	if (entry.centered)
-		width = entry.length;
-	else
-		finalPos.x -= width;
 
-	UiFlags style = UiFlags::AlignRight;
-	if (entry.centered) {
-		style = UiFlags::AlignCenter;
-		finalPos += Displacement { 7, 0 }; // left border
+	UiFlags style = UiFlags::VerticalCenter;
+
+	Point labelPosition = entry.position;
+
+	if (entry.length == 0) {
+		style |= UiFlags::AlignCenter;
+	} else {
+		style |= UiFlags::AlignRight;
+		labelPosition += Displacement { -entry.labelLength - 3, 0 };
 	}
-	DrawString(out, text, { finalPos + Displacement { -2, 2 }, { width, 0 } }, style | UiFlags::ColorBlack, spacing, 10);
-	DrawString(out, text, { finalPos, { width, 0 } }, style | UiFlags::ColorSilver, spacing, 10);
+
+	DrawString(out, text, { labelPosition + Displacement { -2, 2 }, { entry.labelLength, 20 } }, style | UiFlags::ColorBlack, spacing, 10);
+	DrawString(out, text, { labelPosition, { entry.labelLength, 20 } }, style | UiFlags::ColorWhite, spacing, 10);
 }
+
+bool CharPanelLoaded = false;
 
 void LoadCharPanel()
 {
-	LoadArt("data\\charbg.pcx", &PanelFull);
-	LoadArt("data\\boxleftend26.pcx", &PanelParts[0]);
-	LoadArt("data\\boxmiddle26.pcx", &PanelParts[1]);
-	LoadArt("data\\boxrightend26.pcx", &PanelParts[2]);
-	LoadArt("data\\boxleftend27.pcx", &PanelParts[3]);
-	LoadArt("data\\boxmiddle27.pcx", &PanelParts[4]);
-	LoadArt("data\\boxrightend27.pcx", &PanelParts[5]);
+	if (!CharPanelLoaded) {
+		LoadArt("data\\charbg.pcx", &PanelFull);
+		LoadArt("data\\boxleftend27.pcx", &PanelBoxLeft);
+		LoadArt("data\\boxmiddle27.pcx", &PanelBoxMiddel);
+		LoadArt("data\\boxrightend27.pcx", &PanelBoxRight);
+	}
 
 	const Surface out(PanelFull.surface.get());
 
 	for (auto &entry : panelEntries) {
-		if (entry.statDisplayFunc != nullptr) {
-			if (entry.high)
-				DrawPanelFieldHigh(out, entry.position, entry.length);
-			else
-				DrawPanelFieldLow(out, entry.position, entry.length);
+		if (!CharPanelLoaded && entry.statDisplayFunc != nullptr) {
+			DrawPanelField(out, entry.position, entry.length);
 		}
 		DrawShadowString(out, entry);
 	}
 
-	for (auto &gfx : PanelParts) {
-		gfx.Unload();
-	}
+	PanelBoxLeft.Unload();
+	PanelBoxMiddel.Unload();
+	PanelBoxRight.Unload();
 }
-
-bool CharPanelLoaded = false;
 
 void DrawStatButtons(const Surface &out)
 {
 	if (MyPlayer->_pStatPts > 0) {
 		if (MyPlayer->_pBaseStr < MyPlayer->GetMaximumAttributeValue(CharacterAttribute::Strength))
-			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 159 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Strength)] ? 3 : 2);
+			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 157 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Strength)] ? 3 : 2);
 		if (MyPlayer->_pBaseMag < MyPlayer->GetMaximumAttributeValue(CharacterAttribute::Magic))
-			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 187 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Magic)] ? 5 : 4);
+			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 185 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Magic)] ? 5 : 4);
 		if (MyPlayer->_pBaseDex < MyPlayer->GetMaximumAttributeValue(CharacterAttribute::Dexterity))
-			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 216 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Dexterity)] ? 7 : 6);
+			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 214 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Dexterity)] ? 7 : 6);
 		if (MyPlayer->_pBaseVit < MyPlayer->GetMaximumAttributeValue(CharacterAttribute::Vitality))
-			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 244 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Vitality)] ? 9 : 8);
+			CelDrawTo(out, GetPanelPosition(UiPanels::Character, { 137, 242 }), *pChrButtons, chrbtn[static_cast<size_t>(CharacterAttribute::Vitality)] ? 9 : 8);
 	}
 }
 
@@ -303,19 +268,21 @@ void DrawStatButtons(const Surface &out)
 
 void DrawChr(const Surface &out)
 {
-	if (!CharPanelLoaded) {
-		LoadCharPanel();
-		CharPanelLoaded = true;
-	}
+	//if (!CharPanelLoaded) {
+	LoadCharPanel();
+	CharPanelLoaded = true;
+	//}
 	Point pos = GetPanelPosition(UiPanels::Character, { 0, 0 });
 	DrawArt(out, pos, &PanelFull);
 	for (auto &entry : panelEntries) {
 		if (entry.statDisplayFunc != nullptr) {
 			StyledText tmp = entry.statDisplayFunc();
-			Displacement displacement = Displacement { pos.x + 7, pos.y + 17 };
-			if (entry.high)
-				displacement += { 0, 1 };
-			DrawString(out, tmp.text.c_str(), { entry.position + displacement, { entry.length, 0 } }, UiFlags::AlignCenter | tmp.style, entry.statSpacing);
+			DrawString(
+			    out,
+			    tmp.text.c_str(),
+			    { entry.position, { entry.length, 27 } },
+			    UiFlags::AlignCenter | UiFlags::VerticalCenter | tmp.style,
+			    1);
 		}
 	}
 	DrawStatButtons(out);

@@ -106,7 +106,7 @@ void InitHelp()
 	for (const auto *text : HelpText) {
 		strcpy(tempString, _(text));
 
-		WordWrapGameString(tempString, 577);
+		WordWrapString(tempString, 577);
 		const string_view paragraph = tempString;
 
 		size_t previous = 0;
@@ -144,7 +144,7 @@ void DrawHelp(const Surface &out)
 		}
 
 		int offset = 0;
-		UiFlags style = UiFlags::ColorSilver;
+		UiFlags style = UiFlags::ColorWhite;
 		if (line[0] == '$') {
 			offset = 1;
 			style = UiFlags::ColorRed;

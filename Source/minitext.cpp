@@ -44,7 +44,7 @@ void LoadText(const char *text)
 	char tempstr[1536]; // Longest test is about 768 chars * 2 for unicode
 	strcpy(tempstr, text);
 
-	WordWrapGameString(tempstr, 543, GameFontMed, 2);
+	WordWrapString(tempstr, 543, GameFont30);
 	const string_view paragraphs = tempstr;
 
 	size_t previous = 0;
@@ -117,7 +117,7 @@ void DrawQTextContent(const Surface &out)
 			continue;
 		}
 
-		DrawString(out, line, { { sx, sy + i * LineHeight }, { 543, LineHeight } }, UiFlags::FontMedium, 2);
+		DrawString(out, line, { { sx, sy + i * LineHeight }, { 543, LineHeight } }, UiFlags::FontSize30);
 	}
 }
 

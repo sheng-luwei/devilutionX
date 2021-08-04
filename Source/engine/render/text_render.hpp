@@ -19,14 +19,19 @@
 namespace devilution {
 
 enum GameFontTables : uint8_t {
-	GameFontSmall,
-	GameFontMed,
-	GameFontBig,
+	GameFont12,
+	GameFont16,
+	GameFont24,
+	GameFont30,
+	GameFont42,
+	GameFont46,
 };
 
 extern std::optional<CelSprite> pSPentSpn2Cels;
 
-void InitText();
+void InitText(int paletteOffset = 0);
+
+void UpdateFontColors();
 
 /**
  * @brief Calculate pixel width of first line of text, respecting kerning
@@ -36,8 +41,8 @@ void InitText();
  * @param charactersInLine Receives characters read until newline or terminator
  * @return Line width in pixels
  */
-int GetLineWidth(string_view text, GameFontTables size = GameFontSmall, int spacing = 1, int *charactersInLine = nullptr);
-void WordWrapGameString(char *text, size_t width, GameFontTables size = GameFontSmall, int spacing = 1);
+int GetLineWidth(string_view text, GameFontTables size = GameFont12, int spacing = 1, int *charactersInLine = nullptr);
+void WordWrapString(char *text, size_t width, GameFontTables size = GameFont12, int spacing = 1);
 
 /**
  * @brief Draws a line of text within a clipping rectangle (positioned relative to the origin of the output buffer).
@@ -59,7 +64,7 @@ void WordWrapGameString(char *text, size_t width, GameFontTables size = GameFont
  * @param drawTextCursor Whether to draw an animated cursor sprite at the end of the text (default is to display nothing).
  * @return The number of characters rendered, including characters "drawn" outside the buffer.
  */
-uint16_t DrawString(const Surface &out, string_view text, const Rectangle &rect, UiFlags flags = UiFlags::None, int spacing = 1, int lineHeight = -1, bool drawTextCursor = false);
+uint32_t DrawString(const Surface &out, string_view text, const Rectangle &rect, UiFlags flags = UiFlags::None, int spacing = 1, int lineHeight = -1, bool drawTextCursor = false);
 
 /**
  * @brief Draws a line of text at the given position relative to the origin of the output buffer.
@@ -79,11 +84,28 @@ uint16_t DrawString(const Surface &out, string_view text, const Rectangle &rect,
  * @param drawTextCursor Whether to draw an animated cursor sprite at the end of the text (default is to display nothing).
  * @return The number of characters rendered (could be less than the string length if it wrapped past the bottom of the buffer).
  */
-inline uint16_t DrawString(const Surface &out, string_view text, const Point &position, UiFlags flags = UiFlags::None, int spacing = 1, int lineHeight = -1, bool drawTextCursor = false)
+inline void DrawString(const Surface &out, string_view text, const Point &position, UiFlags flags = UiFlags::None, int spacing = 1, int lineHeight = -1, bool drawTextCursor = false)
 {
-	return DrawString(out, text, { position, { out.w() - position.x, 0 } }, flags, spacing, lineHeight, drawTextCursor);
+	GameFontTables size = GameFont12;
+	if (HasAnyOf(flags, UiFlags::FontSize16))
+		size = GameFont16;
+	else if (HasAnyOf(flags, UiFlags::FontSize24))
+		size = GameFont24;
+	else if (HasAnyOf(flags, UiFlags::FontSize30))
+		size = GameFont30;
+	else if (HasAnyOf(flags, UiFlags::FontSize42))
+		size = GameFont42;
+	else if (HasAnyOf(flags, UiFlags::FontSize46))
+		size = GameFont46;
+
+	int LineHeights[6] = { 12, 16, 26, 38, 42, 50 };
+	if (lineHeight == -1)
+		lineHeight = LineHeights[size];
+
+	DrawString(out, text, { position - Displacement { 0, LineHeights[size] }, { out.w() - position.x, 0 } }, flags, spacing, lineHeight, drawTextCursor);
 }
 
 uint8_t PentSpn2Spin();
+void UnloadFonts();
 
 } // namespace devilution

@@ -365,7 +365,7 @@ struct Item {
 		case ITEM_QUALITY_UNIQUE:
 			return UiFlags::ColorGold;
 		default:
-			return UiFlags::ColorSilver;
+			return UiFlags::ColorWhite;
 		}
 	}
 

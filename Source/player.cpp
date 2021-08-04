@@ -34,6 +34,7 @@
 namespace devilution {
 
 int MyPlayerId;
+Player *MyPlayer;
 Player Players[MAX_PLRS];
 bool MyPlayerIsDead;
 int deathdelay;
@@ -3135,7 +3136,7 @@ void ApplyPlrDamage(int pnum, int dam, int minHP /*= 0*/, int frac /*= 0*/, int 
 
 	int totalDamage = (dam << 6) + frac;
 	if (totalDamage > 0 && player.pManaShield) {
-		int manaShieldLevel = player._pSplLvl[SPL_MANASHIELD];
+		int8_t manaShieldLevel = player._pSplLvl[SPL_MANASHIELD];
 		if (manaShieldLevel > 0) {
 			totalDamage += totalDamage / -3;
 		}

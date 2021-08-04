@@ -41,7 +41,7 @@ void UiTitleDialog()
 		UiAddLogo(&vecTitleScreen, LOGO_BIG, 182);
 
 		SDL_Rect rect = { (Sint16)(PANEL_LEFT + 49), (Sint16)(UI_OFFSET_Y + 410), 550, 26 };
-		vecTitleScreen.push_back(std::make_unique<UiArtText>(_("Copyright © 1996-2001 Blizzard Entertainment"), rect, UiFlags::FontMedium | UiFlags::AlignCenter));
+		vecTitleScreen.push_back(std::make_unique<UiArtText>(_("Copyright © 1996-2001 Blizzard Entertainment"), rect, UiFlags::FontSize30 | UiFlags::AlignCenter, 3));
 	}
 	TitleLoad();
 

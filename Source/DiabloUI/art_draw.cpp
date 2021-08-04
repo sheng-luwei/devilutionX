@@ -36,7 +36,7 @@ void DrawArt(Point screenPosition, Art *art, int nFrame, Uint16 srcW, Uint16 src
 		ErrSdl();
 }
 
-void DrawArt(const Surface &out, Point screenPosition, Art *art, int nFrame, Uint16 srcW, Uint16 srcH)
+void DrawArt(const Surface &out, Point screenPosition, Art *art, int nFrame, Uint16 srcW, Uint16 srcH, bool updatePalette)
 {
 	if (screenPosition.y >= gnScreenHeight || screenPosition.x >= gnScreenWidth || art->surface == nullptr)
 		return;
@@ -51,9 +51,10 @@ void DrawArt(const Surface &out, Point screenPosition, Art *art, int nFrame, Uin
 		srcRect.w = srcW;
 	if (srcH != 0 && srcH < srcRect.h)
 		srcRect.h = srcH;
-	SDL_Rect dstRect = MakeSdlRect(screenPosition.x, screenPosition.y, srcRect.w, srcRect.h);
+	out.Clip(&srcRect, &screenPosition);
+	SDL_Rect dstRect { screenPosition.x + out.region.x, screenPosition.y + out.region.y, 0, 0 };
 
-	if (art->surface->format->BitsPerPixel == 8 && art->palette_version != pal_surface_palette_version) {
+	if (updatePalette && art->surface->format->BitsPerPixel == 8 && art->palette_version != pal_surface_palette_version) {
 		if (SDLC_SetSurfaceColors(art->surface.get(), out.surface->format->palette) <= -1)
 			ErrSdl();
 		art->palette_version = pal_surface_palette_version;

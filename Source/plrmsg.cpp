@@ -22,7 +22,7 @@ uint8_t plr_msg_slot;
 _plrmsg plr_msgs[PMSG_COUNT];
 
 /** Maps from player_num to text color, as used in chat messages. */
-const UiFlags TextColorFromPlayerId[MAX_PLRS + 1] = { UiFlags::ColorSilver, UiFlags::ColorSilver, UiFlags::ColorSilver, UiFlags::ColorSilver, UiFlags::ColorGold };
+const UiFlags TextColorFromPlayerId[MAX_PLRS + 1] = { UiFlags::ColorWhite, UiFlags::ColorWhite, UiFlags::ColorWhite, UiFlags::ColorWhite, UiFlags::ColorGold };
 
 void PrintChatMessage(const Surface &out, int x, int y, int width, char *text, UiFlags style)
 {
@@ -31,7 +31,7 @@ void PrintChatMessage(const Surface &out, int x, int y, int width, char *text, U
 		if (text[i] == '\n')
 			text[i] = ' ';
 	}
-	WordWrapGameString(text, width);
+	WordWrapString(text, width);
 	DrawString(out, text, { { x, y }, { width, 0 } }, style, 1, 10);
 }
 

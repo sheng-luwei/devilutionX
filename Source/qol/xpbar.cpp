@@ -138,7 +138,7 @@ bool CheckXPBarInfo()
 		return true;
 	}
 
-	InfoColor = UiFlags::ColorSilver;
+	InfoColor = UiFlags::ColorWhite;
 
 	strcpy(tempstr, _("Experience: "));
 	PrintWithSeparator(tempstr + strlen(tempstr), player._pExperience);
