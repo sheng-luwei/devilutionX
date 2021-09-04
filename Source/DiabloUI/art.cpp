@@ -131,7 +131,9 @@ void LoadArt(const char *pszFile, Art *art, int frames, SDL_Color *pPalette)
 	}
 	SFileCloseFileThreadSafe(handle);
 
+#ifndef USE_SDL1
 	SDL_SetSurfaceRLE(&*artSurface, 1);
+#endif
 
 	art->logical_width = artSurface->w;
 	art->frame_height = height / frames;
